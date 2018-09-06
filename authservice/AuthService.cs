@@ -80,21 +80,7 @@ namespace AuthService
 
         public void Start()
         {
-            EngineAddress = ConfigurationManager.AppSettings["APIENDPOINT"];
-            if (string.IsNullOrEmpty(EngineAddress))
-            {
-                string lMsg = string.Format("API endpoint is empty, a server should be configured for forwarding the requests");
-                Log.Logger.Writeline(lMsg);
-                throw new InvalidDataException(lMsg);
-            }
-
-            string lAuthTable = ConfigurationManager.AppSettings["TenantAuthDDBTableName"];
-            string lUserTable = ConfigurationManager.AppSettings["UserRoleDDBTableName"];
-            DefaultAdmin = ConfigurationManager.AppSettings["DEFAULTADMIN"];
-
             WebApp.Start<OwinConfig>("http://localhost:" + ServicePort);
-
-            WebApp.Start<OwinConfig>("https://localhost:" + 4430);
             Log.Logger.Writeline("Auth service is running");
         }
     }
