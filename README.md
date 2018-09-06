@@ -8,3 +8,7 @@
 4. Copy all the files inside /authservice/bin/Debug and paste it anywhere you would like.
 5. To run the application, simply open authservice.exe.
 6. Open your browser and point it to the location configured in AuthService.cs. Default port is **60020**.
+
+### Note:
+
+For getting the client ID & Secret, create a google application using the [tutorial](https://docs.microsoft.com/en-us/aspnet/core/security/authentication/social/google-logins?view=aspnetcore-2.1&tabs=aspnetcore2x) provided by Microsoft.
