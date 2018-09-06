@@ -1,10 +1,27 @@
 ﻿<!doctype HTML>
 <html>
+
 <head>
     <title>Duplo - Auth</title>
+    <script type="text/javascript">
+        function onLogin() {
+            localStorage.removeItem("g_authToken");
+            localStorage.removeItem("g_username");
+            localStorage.removeItem("g_email");
+            localStorage.removeItem("g_subscriptionId");
+            var serviceHost = location.protocol + '//' + location.host;
+            var url = "/api/Account/ExternalLogin?provider=Google&response_type=token&client_id=DevDuplo&redirect_uri=" +
+                serviceHost +
+                "/dashboard";
+            console.log(url);
+            window.location = url;
+        }
+    </script>
 </head>
+
 <body>
-    Hello World!
-    <a href="/api/Account/ExternalLogin?provider=Google&response_type=token&client_id=DevDuplo&redirect_uri=http://localhost:60020">Google</a>
+    Welcome to AuthService
+    <button type="submit" onclick="onLogin()">Google Login</button>
 </body>
+
 </html>

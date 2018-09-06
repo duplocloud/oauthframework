@@ -94,7 +94,7 @@ namespace Duplo.OAuth
             Log.Logger.Writeline("This is a logout call");
             try
             {
-                Authentication.SignOut(DefaultAuthenticationTypes.ExternalCookie);
+                Authentication.SignOut(new string[] { DefaultAuthenticationTypes.ExternalCookie, DefaultAuthenticationTypes.ApplicationCookie });
                 var token = this.Request.Headers.GetValues("Authorization");
                 Log.Logger.Writeline($"Test: Header: {token}");
             }

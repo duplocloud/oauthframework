@@ -52,3 +52,5 @@ C:\Users\vibin\Documents\Duplo\oauthframework\authservice\bin\Debug\Microsoft.Ow
 C:\Users\vibin\Documents\Duplo\oauthframework\authservice\bin\Debug\Microsoft.Owin.Security.Cookies.dll
 C:\Users\vibin\Documents\Duplo\oauthframework\authservice\bin\Debug\Microsoft.Owin.Security.Cookies.xml
 C:\Users\vibin\Documents\Duplo\oauthframework\authservice\bin\Debug\System.Web.Cors.dll
+C:\Users\vibin\Documents\Duplo\oauthframework\authservice\bin\Debug\Webpage\auth.js
+C:\Users\vibin\Documents\Duplo\oauthframework\authservice\bin\Debug\Webpage\dashboard\index.html

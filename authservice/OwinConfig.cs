@@ -1,17 +1,13 @@
-﻿using System;
-using System.Configuration;
-using System.Web.Http;
-
-using Microsoft.AspNet.Identity;
+﻿using Microsoft.AspNet.Identity;
 using Microsoft.Owin;
 using Microsoft.Owin.FileSystems;
 using Microsoft.Owin.Security.Google;
 using Microsoft.Owin.Security.OAuth;
 using Microsoft.Owin.StaticFiles;
-using System.Threading.Tasks;
-using System.Security.Claims;
-
 using Owin;
+using System;
+using System.Configuration;
+using System.Web.Http;
 
 // Adapted from http://bitoftech.net/2014/06/01/token-based-authentication-asp-net-web-api-2-owin-asp-net-identity/
 [assembly: OwinStartup(typeof(AuthService.OwinConfig))]
@@ -57,7 +53,7 @@ namespace AuthService
                     AllowInsecureHttp = true,
                     TokenEndpointPath = new PathString("/token"),
                     AccessTokenExpireTimeSpan = TimeSpan.FromDays(1),
-                    Provider = new DefaultAuthProvider()
+                    Provider = new DefaultAuthProvider(),
                 };
 
             // Token Generation
@@ -76,7 +72,7 @@ namespace AuthService
             {
                 GoogleClientSecret = ConfigurationManager.AppSettings["GOOGLECLIENTSECRET"];
             }
-            
+
             // Configure Google External Login
             googleAuthOptions = new GoogleOAuth2AuthenticationOptions()
             {
