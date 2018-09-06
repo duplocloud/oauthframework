@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.ServiceProcess;
-using System.Text;
+﻿using System.ServiceProcess;
 using System.Threading;
-using System.Threading.Tasks;
-using Log;
 
-namespace authservice
+namespace AuthService
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             // Initialize logging
-            Logger.InitLogger("AuthService");
-            Logger.Writeline("Starting Oauth Service");
+            Log.Logger.InitLogger("AuthService");
+            Log.Logger.Writeline("Starting Oauth Service");
             AuthService instance = AuthService.GetInstance();
             if (args.Length > 0)
             {

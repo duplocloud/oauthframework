@@ -1,19 +1,35 @@
-﻿using System;
+﻿using ApiClient;
+using Log;
+using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Net;
 using System.Net.Http;
-using System.Web.Http;
-using Log;
 using System.Security.Claims;
-using Newtonsoft.Json.Linq;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Configuration;
-using System.IO;
+using System.Web.Http;
 
 namespace AuthService
 {
+    public class ESData
+    {
+        public string timestamp { get; set; }
+
+        public string Tenant { get; set; }
+
+        public string TriggeringUser { get; set; }
+
+        public string Action { get; set; }
+
+        public string Api { get; set; }
+
+        public string TxtData { get; set; }
+
+        public ESData()
+        {
+            timestamp = DateTime.UtcNow.ToString();
+        }
+    }
 
     public partial class AuthorizationCore
     {
@@ -47,8 +63,36 @@ namespace AuthService
         {
             get { return AuthService.GetInstance().EngineAddress; }
         }
-        
-        private static IStorageClient DbClient;
+
+        public bool BlockTenantAuditAccess
+        {
+            get
+            {
+                if (string.Compare(ConfigurationManager.AppSettings["BLOCKTENANTAUDITACCESS"], "true", true) == 0)
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        public string LogHarvestorUrl
+        {
+            get
+            {
+                return ConfigurationManager.AppSettings["LOGHARVESTORURL"];
+            }
+        }
+
+        public string AuditorUrl
+        {
+            get
+            {
+                return ConfigurationManager.AppSettings["AUDITORURL"];
+            }
+        }
+
+        //private static IStorageClient DbClient;
 
         private string TenantAuthTable { get; set; }
         private string TenantAuthTableKeyName = "TenantId";
@@ -56,16 +100,23 @@ namespace AuthService
         private string UserRoleTable { get; set; }
         private string UserRoleTableKeyName = "Username";
 
-        private static Dictionary<string, TenantAuthInfo> TenantAuthInfoCache;
+        //private static Dictionary<string, TenantAuthInfo> TenantAuthInfoCache;
         private static ReaderWriterLock TenantAuthInfoCachelock = new ReaderWriterLock();
-        private static int LOCK_TIMEOUT = 5000; // In ms
-        
+
+        //private static int LOCK_TIMEOUT = 5000; // In ms
+
         private AuthorizationCore()
         {
-            TenantAuthInfoCache = new Dictionary<string, TenantAuthInfo>();
-            UserRolesCache = new Dictionary<string, UserRole>();
-            DbClient = new LocalStorageClient();
-                
+            //TenantAuthInfoCache = new Dictionary<string, TenantAuthInfo>();
+            //UserRolesCache = new Dictionary<string, UserRole>();
+            //if (!OAuthService.Instance.DISABLE_AWS_CLOUD)
+            //{
+            //    DbClient = new StorageClient();
+            //}
+            //else
+            //{
+            //    DbClient = new LocalStorageClient();
+            //}
         }
 
         public void Init(string aInTenantAuthTable, string aInUserRoleTable)
@@ -77,43 +128,27 @@ namespace AuthService
             List<KeyValuePair<string, string>> lKvps = new List<KeyValuePair<string, string>>();
             lKvps.Add(lTenantAuthTable);
             lKvps.Add(lUserRoleTable);
-            DbClient.Init(lKvps);
-            ReloadCache();
+            //DbClient.Init(lKvps);
         }
 
-        private void ReloadCache()
+        public string GetUsernameFromClaims(IEnumerable<Claim> aInClaims)
         {
-            ReloadTenantAuthCache();
-            ReloadUserRoleCache();
+            string lUsername = string.Empty;
+            foreach (Claim lClaim in aInClaims)
+            {
+                if (lClaim.Type == CLAIM_IDENTITY_TYPE)
+                {
+                    lUsername = lClaim.Value;
+                    break;
+                }
+            }
+            if (!string.IsNullOrEmpty(lUsername))
+            {
+                lUsername = lUsername.ToLower();
+            }
+            return lUsername;
         }
 
-        private void ReloadTenantAuthCache()
-        {
-            try
-            {
-                TenantAuthInfoCachelock.AcquireWriterLock(LOCK_TIMEOUT);
-                try
-                {
-                    DbClient.GetAllTenantAuthInfo(TenantAuthTable, TenantAuthInfoCache);
-                }
-                catch (Exception ex)
-                {
-                    Logger.Writeline("FAILED ReloadCache exception {0}", ex);
-                    throw ex;
-                }
-                finally
-                {
-                    TenantAuthInfoCachelock.ReleaseWriterLock();
-                }
-            }
-            catch (ApplicationException ex)
-            {
-                Logger.Writeline("ReloadCache Failed while trying to acquiring lock {0}", ex);
-                throw ex;
-            }
-        }
-        
-        
         public static HttpResponseException ThrowResponseException(HttpRequestMessage request, HttpStatusCode statusCode, string message, string errorResourceCode = null)
         {
             return new HttpResponseException(
@@ -123,6 +158,49 @@ namespace AuthService
              });
         }
 
-        
+        public void GetDuploUserHeader(List<KeyValuePair<string, string>> aInOutHeaders)
+        {
+            string lUserName = GetUsernameFromClaims(ClaimsPrincipal.Current.Claims);
+            aInOutHeaders.Add(new KeyValuePair<string, string>("DuploUser", lUserName));
+        }
+
+        public static void AddData(
+            string aInAccountName,
+            string aInUser,
+            string aInAction,
+            string aInApi,
+            string aInJsonData)
+        {
+            string ESEndpoint = ConfigurationManager.AppSettings["ElasticSearchEndpoint"];
+            if (string.IsNullOrEmpty(ESEndpoint))
+            {
+                return;
+            }
+
+            string lEsDataStr = string.Empty;
+            try
+            {
+                ESData lEsData = new ESData();
+                lEsData.Tenant = aInAccountName;
+                lEsData.TriggeringUser = aInUser;
+                lEsData.Action = aInAction;
+                lEsData.Api = aInApi;
+                lEsDataStr = Utils.Serialize<ESData>(lEsData);
+                if (string.IsNullOrEmpty(aInJsonData))
+                {
+                    aInJsonData = "{}";
+                }
+
+                lEsDataStr = lEsDataStr.TrimEnd();
+                lEsDataStr = lEsDataStr.TrimEnd('}');
+                lEsDataStr = lEsDataStr + ", \"Data\":" + aInJsonData + "}";
+                string lUrl = ESEndpoint + "/auth/" + aInApi;
+                Utils.PostData<string>(lUrl, lEsDataStr, true, null, string.Empty, 3000);
+            }
+            catch (Exception ex)
+            {
+                Logger.Writeline("Failed to update audit information {0} in Elastic Search with exception {1}", lEsDataStr, ex.Message);
+            }
+        }
     }
 }

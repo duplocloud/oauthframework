@@ -1,14 +1,9 @@
-﻿using System;
-using System.ServiceProcess;
-using System.Threading;
-using System.Collections.Generic;
-using Microsoft.Owin.Hosting;
+﻿using Microsoft.Owin.Hosting;
+using System;
 using System.Configuration;
 using System.IO;
-using Newtonsoft.Json;
-using System.Net;
 using System.Reflection;
-using Log;
+using System.ServiceProcess;
 
 namespace AuthService
 {
@@ -23,7 +18,7 @@ namespace AuthService
         public string EngineAddress { get; set; }
 
         public string DefaultAdmin { get; set; }
-            
+
         private int ServicePort
         {
             get
@@ -71,7 +66,7 @@ namespace AuthService
             AuthService.Shutdown = true;
             base.OnStop();
         }
-            
+
         public static string AssemblyDirectory
         {
             get
@@ -82,7 +77,6 @@ namespace AuthService
                 return Path.GetDirectoryName(path);
             }
         }
-            
 
         public void Start()
         {
@@ -90,17 +84,18 @@ namespace AuthService
             if (string.IsNullOrEmpty(EngineAddress))
             {
                 string lMsg = string.Format("API endpoint is empty, a server should be configured for forwarding the requests");
-                Logger.Writeline(lMsg);
+                Log.Logger.Writeline(lMsg);
                 throw new InvalidDataException(lMsg);
             }
 
             string lAuthTable = ConfigurationManager.AppSettings["TenantAuthDDBTableName"];
             string lUserTable = ConfigurationManager.AppSettings["UserRoleDDBTableName"];
             DefaultAdmin = ConfigurationManager.AppSettings["DEFAULTADMIN"];
-            AuthorizationCore.GetInstance().Init(lAuthTable, lUserTable);
 
-            WebApp.Start<OwinConfig>("https://*:" + ServicePort);
-            Logger.Writeline("Auth service is running");
+            WebApp.Start<OwinConfig>("http://localhost:" + ServicePort);
+
+            WebApp.Start<OwinConfig>("https://localhost:" + 4430);
+            Log.Logger.Writeline("Auth service is running");
         }
     }
 }

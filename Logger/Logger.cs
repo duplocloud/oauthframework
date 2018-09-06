@@ -43,9 +43,9 @@ namespace Log
             Logger.CurrentFileLength = 0;
 
             string logFile = string.Empty;
-            
+
             if(string.IsNullOrEmpty(Logger.LogFileFolder))
-            { 
+            {
                 if (!aInLocalDir)
                 {
                     string appData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
@@ -53,7 +53,7 @@ namespace Log
                 }
                 else
                 {
-                    string lLogPath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");                    
+                    string lLogPath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
                     if (!Directory.Exists(lLogPath))
                     {
                         Directory.CreateDirectory(lLogPath);
@@ -83,8 +83,8 @@ namespace Log
         public static void CloseLogger()
         {
             if (Filestream != null)
-            {        
-                // Write string at start of file. 
+            {
+                // Write string at start of file.
                 if (Streamwriter != null)
                 {
                     Streamwriter.Close();
@@ -99,10 +99,10 @@ namespace Log
         public static string Writeline(params object[] args)
         {
             if (args.Length == 0)
-            {                
+            {
                 return string.Empty;
             }
-            
+
             String finalString = string.Empty;
 
             finalString = String.Format("{0} - {1} ", DateTime.Now, Thread.CurrentThread.ManagedThreadId);
@@ -146,7 +146,6 @@ namespace Log
             }
 
             return finalString;
-            
         }
 
         private static void PruneExtraLogs()
